@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { StudentStatusSection } from "@/components/student-status-section";
 import {
@@ -9,6 +9,7 @@ import {
   type SimilarQuestionsByQuestionId,
 } from "@/types/similar-question";
 import type { StudentStatus } from "@/types/student-status";
+import { resolveNodeNavigation, type NodeRow } from "@/types/node";
 import {
   formatQuestionTitle,
   getQuestionById,
@@ -24,6 +25,8 @@ type DisplayContent = {
 type ExercisePageProps = {
   questions: Question[];
   similarQuestionsMap: SimilarQuestionsByQuestionId;
+  nodeRows: NodeRow[];
+  initialOriginParam: string | null;
   exerciseStatuses: StudentStatus[];
   explanationStatuses: StudentStatus[];
   initialQuestionId: string;
@@ -32,11 +35,14 @@ type ExercisePageProps = {
 export function ExercisePage({
   questions,
   similarQuestionsMap,
+  nodeRows,
+  initialOriginParam,
   exerciseStatuses,
   explanationStatuses,
   initialQuestionId,
 }: ExercisePageProps) {
   const [questionId, setQuestionId] = useState(initialQuestionId);
+  const [originParam, setOriginParam] = useState(initialOriginParam);
   const [similarIndex, setSimilarIndex] = useState<number | null>(null);
 
   const question = getQuestionById(questions, questionId) ?? questions[0];
@@ -47,6 +53,14 @@ export function ExercisePage({
   const questionIndex = getQuestionIndex(questions, question.id);
   const hasPreviousMain = questionIndex > 0;
   const hasNextMain = questionIndex < questions.length - 1;
+
+  const { originQuestionId, previousNodeId } = useMemo(
+    () => resolveNodeNavigation(questionId, originParam, nodeRows),
+    [questionId, originParam, nodeRows],
+  );
+
+  const showReturnToOrigin =
+    originQuestionId != null && questionId !== originQuestionId;
 
   const displayed: DisplayContent =
     similarIndex !== null && similarQuestions[similarIndex]
@@ -70,6 +84,7 @@ export function ExercisePage({
     if (!hasNextMain) return;
 
     setQuestionId(questions[questionIndex + 1].id);
+    setOriginParam(null);
     setSimilarIndex(null);
   }, [hasNextMain, questionIndex, questions]);
 
@@ -85,9 +100,15 @@ export function ExercisePage({
 
     if (hasPreviousMain) {
       setQuestionId(questions[questionIndex - 1].id);
+      setOriginParam(null);
       setSimilarIndex(null);
     }
   }, [hasPreviousMain, isViewingSimilar, questionIndex, questions, similarIndex]);
+
+  const previousNodeHref =
+    previousNodeId && originQuestionId
+      ? `/exercise/${previousNodeId}?origin=${originQuestionId}`
+      : null;
 
   return (
     <PageLayout title={formatQuestionTitle(questions, question.id)}>
@@ -155,6 +176,23 @@ export function ExercisePage({
           >
             戻る
           </button>
+          {previousNodeHref ? (
+            <Link href={previousNodeHref} className="btn btn-secondary">
+              前のノードに戻る
+            </Link>
+          ) : (
+            <button type="button" className="btn btn-secondary" disabled>
+              前のノードに戻る
+            </button>
+          )}
+          {showReturnToOrigin && originQuestionId ? (
+            <Link
+              href={`/exercise/${originQuestionId}`}
+              className="btn btn-secondary"
+            >
+              元の問題に戻る
+            </Link>
+          ) : null}
           <Link href="/exercise" className="btn btn-secondary">
             問題一覧へ戻る
           </Link>

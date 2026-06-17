@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExercisePage } from "@/components/exercise-page";
 import { PageLayout } from "@/components/page-layout";
+import { getAllNodes } from "@/lib/nodes";
 import { getQuestions } from "@/lib/questions";
 import { getSimilarQuestionsMap } from "@/lib/similar-questions";
 import {
@@ -12,22 +13,30 @@ import { getQuestionById } from "@/types/question";
 
 type ExerciseDetailRouteProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ origin?: string }>;
 };
 
-export default async function ExerciseDetailRoute({ params }: ExerciseDetailRouteProps) {
+export default async function ExerciseDetailRoute({
+  params,
+  searchParams,
+}: ExerciseDetailRouteProps) {
   const { id } = await params;
+  const { origin } = await searchParams;
   let questions;
   let similarQuestionsMap;
   let exerciseStatuses;
   let explanationStatuses;
+  let nodeRows;
 
   try {
     questions = await getQuestions();
-    [similarQuestionsMap, exerciseStatuses, explanationStatuses] = await Promise.all([
-      getSimilarQuestionsMap(questions.map((q) => q.id)),
-      getExerciseStudentStatuses(),
-      getExplanationStudentStatuses(),
-    ]);
+    [similarQuestionsMap, exerciseStatuses, explanationStatuses, nodeRows] =
+      await Promise.all([
+        getSimilarQuestionsMap(questions.map((q) => q.id)),
+        getExerciseStudentStatuses(),
+        getExplanationStudentStatuses(),
+        getAllNodes(),
+      ]);
   } catch {
     return (
       <PageLayout title="演習">
@@ -51,6 +60,8 @@ export default async function ExerciseDetailRoute({ params }: ExerciseDetailRout
     <ExercisePage
       questions={questions}
       similarQuestionsMap={similarQuestionsMap}
+      nodeRows={nodeRows}
+      initialOriginParam={origin ?? null}
       exerciseStatuses={exerciseStatuses}
       explanationStatuses={explanationStatuses}
       initialQuestionId={question.id}
