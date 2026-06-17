@@ -98,6 +98,19 @@ export function ExercisePage({
           </p>
         )}
 
+        <div className="flex gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm sm:px-5">
+          <p className="flex-1">
+            <span className="font-medium text-zinc-500">習得難易度</span>
+            <span className="ml-2 text-zinc-900">
+              {question.difficultyLevel || "—"}
+            </span>
+          </p>
+          <p className="flex-1">
+            <span className="font-medium text-zinc-500">重要度</span>
+            <span className="ml-2 text-zinc-900">{question.priority || "—"}</span>
+          </p>
+        </div>
+
         <section className="rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
           <h2 className="mb-2 text-sm font-semibold text-blue-600">問題文</h2>
           <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-900">

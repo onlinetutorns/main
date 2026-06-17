@@ -4,6 +4,8 @@ export type Question = {
   explanation: string;
   order: number;
   unit: string;
+  difficultyLevel: string;
+  priority: string;
 };
 
 export type QuestionUnitGroup = {
