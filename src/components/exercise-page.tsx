@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
-import { AdviceModal } from "@/components/advice-modal";
 import { PageLayout } from "@/components/page-layout";
+import { StudentStatusSection } from "@/components/student-status-section";
 import {
   getSimilarQuestionsForQuestion,
   type SimilarQuestionsByQuestionId,
@@ -24,19 +24,20 @@ type DisplayContent = {
 type ExercisePageProps = {
   questions: Question[];
   similarQuestionsMap: SimilarQuestionsByQuestionId;
-  studentStatuses: StudentStatus[];
+  exerciseStatuses: StudentStatus[];
+  explanationStatuses: StudentStatus[];
   initialQuestionId: string;
 };
 
 export function ExercisePage({
   questions,
   similarQuestionsMap,
-  studentStatuses,
+  exerciseStatuses,
+  explanationStatuses,
   initialQuestionId,
 }: ExercisePageProps) {
   const [questionId, setQuestionId] = useState(initialQuestionId);
   const [similarIndex, setSimilarIndex] = useState<number | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<StudentStatus | null>(null);
 
   const question = getQuestionById(questions, questionId) ?? questions[0];
   const similarQuestions = getSimilarQuestionsForQuestion(
@@ -63,7 +64,6 @@ export function ExercisePage({
     if (!hasNextSimilar) return;
 
     setSimilarIndex((current) => (current === null ? 0 : current + 1));
-    setSelectedStatus(null);
   }, [hasNextSimilar]);
 
   const goToNext = useCallback(() => {
@@ -71,7 +71,6 @@ export function ExercisePage({
 
     setQuestionId(questions[questionIndex + 1].id);
     setSimilarIndex(null);
-    setSelectedStatus(null);
   }, [hasNextMain, questionIndex, questions]);
 
   const goBack = useCallback(() => {
@@ -81,14 +80,12 @@ export function ExercisePage({
       } else {
         setSimilarIndex(null);
       }
-      setSelectedStatus(null);
       return;
     }
 
     if (hasPreviousMain) {
       setQuestionId(questions[questionIndex - 1].id);
       setSimilarIndex(null);
-      setSelectedStatus(null);
     }
   }, [hasPreviousMain, isViewingSimilar, questionIndex, questions, similarIndex]);
 
@@ -115,25 +112,10 @@ export function ExercisePage({
           </p>
         </section>
 
-        <section>
-          <h2 className="mb-3 text-sm font-semibold text-zinc-900">生徒の様子</h2>
-          {studentStatuses.length > 0 ? (
-            <div className="grid grid-cols-2 gap-3">
-              {studentStatuses.map((status) => (
-                <button
-                  key={status.id}
-                  type="button"
-                  className="choice-btn"
-                  onClick={() => setSelectedStatus(status)}
-                >
-                  {status.reaction}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-500">表示できる生徒の様子がありません。</p>
-          )}
-        </section>
+        <StudentStatusSection
+          exerciseStatuses={exerciseStatuses}
+          explanationStatuses={explanationStatuses}
+        />
 
         <div className="mt-auto flex flex-col gap-3 pt-2">
           <button
@@ -168,13 +150,6 @@ export function ExercisePage({
           </Link>
         </div>
       </div>
-
-      <AdviceModal
-        isOpen={selectedStatus !== null}
-        title={`アドバイス：${selectedStatus?.reaction ?? ""}`}
-        advice={selectedStatus?.action ?? ""}
-        onClose={() => setSelectedStatus(null)}
-      />
     </PageLayout>
   );
 }

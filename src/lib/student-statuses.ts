@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import type { StudentStatus } from "@/types/student-status";
 
-const EXERCISE_LEARNING_STAGE = "演習中";
+export const LEARNING_STAGE = {
+  EXERCISE: "演習中",
+  EXPLANATION: "説明中",
+} as const;
+
 const LEARNING_STAGE_COLUMN = "Learning Stage";
 
 type StudentStatusRow = {
@@ -10,13 +14,15 @@ type StudentStatusRow = {
   action: string;
 };
 
-export async function getExerciseStudentStatuses(): Promise<StudentStatus[]> {
+export async function getStudentStatusesByLearningStage(
+  learningStage: string,
+): Promise<StudentStatus[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("student_statuses")
     .select("id, reaction, action")
-    .eq(LEARNING_STAGE_COLUMN, EXERCISE_LEARNING_STAGE);
+    .eq(LEARNING_STAGE_COLUMN, learningStage);
 
   if (error) {
     throw new Error(`生徒の様子の取得に失敗しました: ${error.message}`);
@@ -27,4 +33,12 @@ export async function getExerciseStudentStatuses(): Promise<StudentStatus[]> {
     reaction: row.reaction,
     action: row.action,
   }));
+}
+
+export function getExerciseStudentStatuses() {
+  return getStudentStatusesByLearningStage(LEARNING_STAGE.EXERCISE);
+}
+
+export function getExplanationStudentStatuses() {
+  return getStudentStatusesByLearningStage(LEARNING_STAGE.EXPLANATION);
 }

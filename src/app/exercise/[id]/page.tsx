@@ -4,7 +4,10 @@ import { ExercisePage } from "@/components/exercise-page";
 import { PageLayout } from "@/components/page-layout";
 import { getQuestions } from "@/lib/questions";
 import { getSimilarQuestionsMap } from "@/lib/similar-questions";
-import { getExerciseStudentStatuses } from "@/lib/student-statuses";
+import {
+  getExerciseStudentStatuses,
+  getExplanationStudentStatuses,
+} from "@/lib/student-statuses";
 import { getQuestionById } from "@/types/question";
 
 type ExerciseDetailRouteProps = {
@@ -15,13 +18,15 @@ export default async function ExerciseDetailRoute({ params }: ExerciseDetailRout
   const { id } = await params;
   let questions;
   let similarQuestionsMap;
-  let studentStatuses;
+  let exerciseStatuses;
+  let explanationStatuses;
 
   try {
     questions = await getQuestions();
-    [similarQuestionsMap, studentStatuses] = await Promise.all([
+    [similarQuestionsMap, exerciseStatuses, explanationStatuses] = await Promise.all([
       getSimilarQuestionsMap(questions.map((q) => q.id)),
       getExerciseStudentStatuses(),
+      getExplanationStudentStatuses(),
     ]);
   } catch {
     return (
@@ -46,7 +51,8 @@ export default async function ExerciseDetailRoute({ params }: ExerciseDetailRout
     <ExercisePage
       questions={questions}
       similarQuestionsMap={similarQuestionsMap}
-      studentStatuses={studentStatuses}
+      exerciseStatuses={exerciseStatuses}
+      explanationStatuses={explanationStatuses}
       initialQuestionId={question.id}
     />
   );

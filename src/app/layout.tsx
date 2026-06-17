@@ -21,6 +21,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "オンライン家庭教師",
   description: "演習・説明モードで学習するオンライン家庭教師アプリ",
+  robots: {
+    index: false,
+  },
 };
 
 export default function RootLayout({
