@@ -55,6 +55,7 @@ export default async function StudentDetailRoute({
       initialOriginParam={origin ?? null}
       initialQuestionId={question.id}
       showStudentStatus={false}
+      collapseExplanation
       basePath="/student"
     />
   );

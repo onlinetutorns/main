@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PageLayout } from "@/components/page-layout";
 import { StudentStatusSection } from "@/components/student-status-section";
 import {
@@ -31,6 +31,7 @@ type ExercisePageProps = {
   explanationStatuses?: StudentStatus[];
   initialQuestionId: string;
   showStudentStatus?: boolean;
+  collapseExplanation?: boolean;
   basePath?: string;
 };
 
@@ -43,11 +44,19 @@ export function ExercisePage({
   explanationStatuses = [],
   initialQuestionId,
   showStudentStatus = true,
+  collapseExplanation = false,
   basePath = "/exercise",
 }: ExercisePageProps) {
   const [questionId, setQuestionId] = useState(initialQuestionId);
   const [originParam, setOriginParam] = useState(initialOriginParam);
   const [similarIndex, setSimilarIndex] = useState<number | null>(null);
+  const [isExplanationOpen, setIsExplanationOpen] = useState(false);
+
+  useEffect(() => {
+    if (collapseExplanation) {
+      setIsExplanationOpen(false);
+    }
+  }, [collapseExplanation, questionId, similarIndex]);
 
   const question = getQuestionById(questions, questionId) ?? questions[0];
   const similarQuestions = getSimilarQuestionsForQuestion(
@@ -145,12 +154,37 @@ export function ExercisePage({
               </p>
             </div>
 
-            <section className="content-section rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
-              <h2 className="mb-2 text-sm font-semibold text-blue-600">解説</h2>
-              <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-700">
-                {displayed.explanation}
-              </p>
-            </section>
+            {collapseExplanation ? (
+              <section className="accordion content-section">
+                <button
+                  type="button"
+                  className="accordion-trigger"
+                  aria-expanded={isExplanationOpen}
+                  onClick={() => setIsExplanationOpen((open) => !open)}
+                >
+                  <span className="flex-1 text-left text-sm font-semibold text-blue-600">
+                    解説
+                  </span>
+                  <span className="accordion-icon" aria-hidden="true">
+                    {isExplanationOpen ? "−" : "+"}
+                  </span>
+                </button>
+                {isExplanationOpen ? (
+                  <div className="accordion-panel border-t border-zinc-200 p-4 sm:p-5">
+                    <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-700">
+                      {displayed.explanation}
+                    </p>
+                  </div>
+                ) : null}
+              </section>
+            ) : (
+              <section className="content-section rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
+                <h2 className="mb-2 text-sm font-semibold text-blue-600">解説</h2>
+                <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-700">
+                  {displayed.explanation}
+                </p>
+              </section>
+            )}
           </div>
 
           {showStudentStatus ? (
