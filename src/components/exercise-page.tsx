@@ -25,6 +25,9 @@ type DisplayContent = {
 const MOBILE_VIEWPORT_QUERY =
   "(max-width: 767px), (orientation: landscape) and (max-height: 36rem)";
 
+const LANDSCAPE_MOBILE_QUERY =
+  "(orientation: landscape) and (max-height: 36rem)";
+
 type ExercisePageProps = {
   questions: Question[];
   similarQuestionsMap: SimilarQuestionsByQuestionId;
@@ -55,6 +58,7 @@ export function ExercisePage({
   const [similarIndex, setSimilarIndex] = useState<number | null>(null);
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
   const explanationTriggerRef = useRef<HTMLButtonElement>(null);
@@ -71,13 +75,23 @@ export function ExercisePage({
   const measureExplanationPanelHeight = useCallback(() => {
     if (!isExplanationOpen) return;
 
-    const scrollArea = scrollAreaRef.current;
     const trigger = explanationTriggerRef.current;
-    if (!scrollArea || !trigger) return;
+    const scrollArea = scrollAreaRef.current;
+    const main = mainRef.current;
+    const actions = actionsRef.current;
+    if (!trigger || !scrollArea) return;
+
+    const isLandscapeMobile = window.matchMedia(LANDSCAPE_MOBILE_QUERY).matches;
+    const boundsElement = isLandscapeMobile && main ? main : scrollArea;
+
+    let bottomBound = boundsElement.getBoundingClientRect().bottom;
+
+    if (actions && window.matchMedia(MOBILE_VIEWPORT_QUERY).matches) {
+      bottomBound = Math.min(bottomBound, actions.getBoundingClientRect().top);
+    }
 
     const availableHeight =
-      scrollArea.getBoundingClientRect().bottom -
-      trigger.getBoundingClientRect().bottom;
+      bottomBound - trigger.getBoundingClientRect().bottom;
 
     setExplanationPanelMaxHeight(Math.max(availableHeight, 0));
   }, [isExplanationOpen]);
@@ -231,10 +245,14 @@ export function ExercisePage({
     measureExplanationPanelHeight();
 
     const scrollArea = scrollAreaRef.current;
+    const main = mainRef.current;
+    const actions = actionsRef.current;
     if (!scrollArea) return;
 
     const observer = new ResizeObserver(measureExplanationPanelHeight);
     observer.observe(scrollArea);
+    if (main) observer.observe(main);
+    if (actions) observer.observe(actions);
     window.addEventListener("resize", measureExplanationPanelHeight);
 
     return () => {
@@ -316,6 +334,7 @@ export function ExercisePage({
             }`}
           >
             <div
+              ref={mainRef}
               className={`exercise-page-main flex flex-col gap-5${
                 collapseExplanation && isExplanationOpen ? " min-h-0 flex-1" : ""
               }`}
@@ -381,7 +400,7 @@ export function ExercisePage({
                   ) : null}
                 </section>
               ) : (
-                <section className="content-section rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
+                <section className="content-section explanation-section rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
                   <h2 className="mb-2 text-sm font-semibold text-blue-600">解説</h2>
                   <p className="content-body whitespace-pre-wrap text-zinc-700">
                     {displayed.explanation}
