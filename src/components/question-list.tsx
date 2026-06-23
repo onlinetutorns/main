@@ -7,9 +7,10 @@ import type { QuestionUnitGroup } from "@/types/question";
 
 type QuestionListProps = {
   unitGroups: QuestionUnitGroup[];
+  basePath?: string;
 };
 
-export function QuestionList({ unitGroups }: QuestionListProps) {
+export function QuestionList({ unitGroups, basePath = "/exercise" }: QuestionListProps) {
   const [openUnits, setOpenUnits] = useState<Set<string>>(new Set());
 
   const toggleUnit = (unit: string) => {
@@ -50,7 +51,7 @@ export function QuestionList({ unitGroups }: QuestionListProps) {
                   {questions.map((question) => (
                     <li key={question.id}>
                       <Link
-                        href={`/exercise/${question.id}`}
+                        href={`${basePath}/${question.id}`}
                         className="question-link"
                       >
                         <span className="question-order">問{question.order}</span>

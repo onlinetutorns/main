@@ -27,9 +27,11 @@ type ExercisePageProps = {
   similarQuestionsMap: SimilarQuestionsByQuestionId;
   nodeRows: NodeRow[];
   initialOriginParam: string | null;
-  exerciseStatuses: StudentStatus[];
-  explanationStatuses: StudentStatus[];
+  exerciseStatuses?: StudentStatus[];
+  explanationStatuses?: StudentStatus[];
   initialQuestionId: string;
+  showStudentStatus?: boolean;
+  basePath?: string;
 };
 
 export function ExercisePage({
@@ -37,9 +39,11 @@ export function ExercisePage({
   similarQuestionsMap,
   nodeRows,
   initialOriginParam,
-  exerciseStatuses,
-  explanationStatuses,
+  exerciseStatuses = [],
+  explanationStatuses = [],
   initialQuestionId,
+  showStudentStatus = true,
+  basePath = "/exercise",
 }: ExercisePageProps) {
   const [questionId, setQuestionId] = useState(initialQuestionId);
   const [originParam, setOriginParam] = useState(initialOriginParam);
@@ -107,7 +111,7 @@ export function ExercisePage({
 
   const previousNodeHref =
     previousNodeId && originQuestionId
-      ? `/exercise/${previousNodeId}?origin=${originQuestionId}`
+      ? `${basePath}/${previousNodeId}?origin=${originQuestionId}`
       : null;
 
   return (
@@ -146,10 +150,12 @@ export function ExercisePage({
           </p>
         </section>
 
-        <StudentStatusSection
-          exerciseStatuses={exerciseStatuses}
-          explanationStatuses={explanationStatuses}
-        />
+        {showStudentStatus ? (
+          <StudentStatusSection
+            exerciseStatuses={exerciseStatuses}
+            explanationStatuses={explanationStatuses}
+          />
+        ) : null}
 
         <div className="mt-auto flex flex-col gap-3 pt-2">
           <button
@@ -187,13 +193,13 @@ export function ExercisePage({
           )}
           {showReturnToOrigin && originQuestionId ? (
             <Link
-              href={`/exercise/${originQuestionId}`}
+              href={`${basePath}/${originQuestionId}`}
               className="btn btn-secondary"
             >
               元の問題に戻る
             </Link>
           ) : null}
-          <Link href="/exercise" className="btn btn-secondary">
+          <Link href={basePath} className="btn btn-secondary">
             問題一覧へ戻る
           </Link>
           <Link href="/" className="btn btn-outline">
