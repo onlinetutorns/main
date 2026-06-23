@@ -52,8 +52,8 @@ export function StudentStatusSection({
 
   return (
     <>
-      <section>
-        <div className="mb-3 flex items-center justify-between gap-3">
+      <section className="student-status-section">
+        <div className="student-status-header mb-3 flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-zinc-900">生徒の様子</h2>
           <div className="stage-toggle-group">
             <button
@@ -89,7 +89,7 @@ export function StudentStatusSection({
         ) : null}
 
         {filteredStatuses.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="student-status-reactions grid grid-cols-2 gap-3">
             {filteredStatuses.map((status) => (
               <button
                 key={status.id}
