@@ -324,6 +324,65 @@ body {
   font-size: calc(1.125rem - 2px);
 }
 
+@media (max-width: 767px) and (orientation: portrait) {
+  .app-page:has(.exercise-page) .exercise-page-actions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    margin: 0;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -4px 16px rgb(0 0 0 / 0.08);
+    transition: transform 0.25s ease-in-out;
+    will-change: transform;
+  }
+
+  .app-page:has(.exercise-page) .exercise-page-actions.exercise-page-actions--hidden {
+    transform: translate3d(0, 100%, 0);
+    pointer-events: none;
+  }
+
+  .app-page:has(.exercise-page) .exercise-page-actions .btn {
+    font-size: calc(1.125rem - 2px);
+  }
+
+  .app-page:has(.exercise-page) .exercise-page-scroll {
+    gap: 1rem;
+    padding-bottom: var(--exercise-actions-height, 10rem);
+  }
+
+  html:has(.exercise-page),
+  body:has(.exercise-page) {
+    height: 100dvh;
+    overflow: hidden;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 36rem) {
+  .app-page:has(.exercise-page) .exercise-page-actions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    margin: 0;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -4px 16px rgb(0 0 0 / 0.08);
+    transition: transform 0.25s ease-in-out;
+    will-change: transform;
+  }
+
+  .app-page:has(.exercise-page) .exercise-page-actions.exercise-page-actions--hidden {
+    transform: translate3d(0, 100%, 0);
+    pointer-events: none;
+  }
+}
+
 .app-page:has(.exercise-page) {
   height: 100dvh;
   max-height: 100dvh;

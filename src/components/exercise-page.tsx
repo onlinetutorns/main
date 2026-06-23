@@ -22,6 +22,9 @@ type DisplayContent = {
   explanation: string;
 };
 
+const MOBILE_VIEWPORT_QUERY =
+  "(max-width: 767px), (orientation: landscape) and (max-height: 36rem)";
+
 type ExercisePageProps = {
   questions: Question[];
   similarQuestionsMap: SimilarQuestionsByQuestionId;
@@ -52,10 +55,18 @@ export function ExercisePage({
   const [similarIndex, setSimilarIndex] = useState<number | null>(null);
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
   const explanationTriggerRef = useRef<HTMLButtonElement>(null);
   const [explanationPanelMaxHeight, setExplanationPanelMaxHeight] = useState<
     number | null
   >(null);
+  const [actionsVisible, setActionsVisible] = useState(true);
+  const lastTouchYRef = useRef(0);
+
+  const updateActionsVisibility = useCallback((visible: boolean) => {
+    setActionsVisible(visible);
+  }, []);
 
   const measureExplanationPanelHeight = useCallback(() => {
     if (!isExplanationOpen) return;
@@ -76,6 +87,121 @@ export function ExercisePage({
       setIsExplanationOpen(false);
     }
   }, [collapseExplanation, questionId, similarIndex]);
+
+  useEffect(() => {
+    setActionsVisible(true);
+  }, [questionId, similarIndex]);
+
+  useLayoutEffect(() => {
+    const actions = actionsRef.current;
+    if (!actions) return;
+
+    const updateActionsHeight = () => {
+      document.documentElement.style.setProperty(
+        "--exercise-actions-height",
+        `${actions.offsetHeight}px`,
+      );
+    };
+
+    updateActionsHeight();
+
+    const observer = new ResizeObserver(updateActionsHeight);
+    observer.observe(actions);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+
+    const media = window.matchMedia(MOBILE_VIEWPORT_QUERY);
+    const scrollTops = new Map<EventTarget, number>();
+
+    const readScrollTop = (target: EventTarget): number | null => {
+      if (target === document || target === document.documentElement) {
+        return window.scrollY;
+      }
+
+      if (target instanceof HTMLElement) {
+        return target.scrollTop;
+      }
+
+      return null;
+    };
+
+    const isInPageScroll = (target: EventTarget) => {
+      if (target === document || target === document.documentElement) {
+        return true;
+      }
+
+      return target instanceof Node && root.contains(target);
+    };
+
+    const applyScrollDirection = (delta: number, atTop: boolean) => {
+      if (!media.matches) return;
+
+      if (atTop) {
+        updateActionsVisibility(true);
+        return;
+      }
+
+      if (delta > 4) {
+        updateActionsVisibility(false);
+      } else if (delta < -4) {
+        updateActionsVisibility(true);
+      }
+    };
+
+    const onScroll = (event: Event) => {
+      if (!media.matches || !isInPageScroll(event.target ?? document)) return;
+
+      const currentTop = readScrollTop(event.target ?? document);
+      if (currentTop === null) return;
+
+      const lastTop = scrollTops.get(event.target ?? document) ?? currentTop;
+      const delta = currentTop - lastTop;
+      scrollTops.set(event.target ?? document, currentTop);
+
+      if (Math.abs(delta) < 1) return;
+
+      applyScrollDirection(delta, currentTop <= 4);
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      lastTouchYRef.current = event.touches[0]?.clientY ?? 0;
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (!media.matches) return;
+
+      const touchY = event.touches[0]?.clientY ?? lastTouchYRef.current;
+      const delta = lastTouchYRef.current - touchY;
+
+      if (Math.abs(delta) < 6) return;
+
+      applyScrollDirection(delta, false);
+      lastTouchYRef.current = touchY;
+    };
+
+    const onMediaChange = () => {
+      if (!media.matches) {
+        updateActionsVisibility(true);
+      }
+    };
+
+    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    root.addEventListener("touchstart", onTouchStart, { passive: true });
+    root.addEventListener("touchmove", onTouchMove, { passive: true });
+    media.addEventListener("change", onMediaChange);
+
+    return () => {
+      document.removeEventListener("scroll", onScroll, { capture: true });
+      root.removeEventListener("touchstart", onTouchStart);
+      root.removeEventListener("touchmove", onTouchMove);
+      media.removeEventListener("change", onMediaChange);
+    };
+  }, [isExplanationOpen, questionId, similarIndex, updateActionsVisibility]);
 
   const question = getQuestionById(questions, questionId) ?? questions[0];
   const similarQuestions = getSimilarQuestionsForQuestion(
@@ -177,7 +303,10 @@ export function ExercisePage({
           </p>
         )}
 
-        <div className="exercise-page-content flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div
+          ref={contentRef}
+          className="exercise-page-content flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
           <div
             ref={scrollAreaRef}
             className={`exercise-page-scroll flex min-h-0 flex-1 flex-col gap-5 overscroll-contain${
@@ -271,7 +400,12 @@ export function ExercisePage({
             ) : null}
           </div>
 
-          <div className="exercise-page-actions flex shrink-0 flex-col gap-3 border-t border-zinc-200 bg-zinc-50 pt-3">
+          <div
+            ref={actionsRef}
+            className={`exercise-page-actions flex shrink-0 flex-col gap-3 border-t border-zinc-200 bg-zinc-50 pt-3${
+              !actionsVisible ? " exercise-page-actions--hidden" : ""
+            }`}
+          >
             <div className="exercise-page-actions-row exercise-page-actions-row-primary">
               <button
                 type="button"
