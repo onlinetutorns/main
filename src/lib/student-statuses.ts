@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import type { StudentStatus } from "@/types/student-status";
 
+export { getUniqueParts } from "@/types/student-status";
+
 export const LEARNING_STAGE = {
   EXERCISE: "演習中",
   EXPLANATION: "説明中",
@@ -10,6 +12,7 @@ const LEARNING_STAGE_COLUMN = "Learning Stage";
 
 type StudentStatusRow = {
   id: string;
+  part: string;
   reaction: string;
   action: string;
 };
@@ -21,7 +24,7 @@ export async function getStudentStatusesByLearningStage(
 
   const { data, error } = await supabase
     .from("student_statuses")
-    .select("id, reaction, action")
+    .select("id, part, reaction, action")
     .eq(LEARNING_STAGE_COLUMN, learningStage);
 
   if (error) {
@@ -30,6 +33,7 @@ export async function getStudentStatusesByLearningStage(
 
   return (data as StudentStatusRow[]).map((row) => ({
     id: row.id,
+    part: row.part,
     reaction: row.reaction,
     action: row.action,
   }));

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdviceModal } from "@/components/advice-modal";
+import { getUniqueParts } from "@/types/student-status";
 import type { StudentStatus } from "@/types/student-status";
 
 export type StudentStatusStage = "exercise" | "explanation";
@@ -18,13 +19,34 @@ export function StudentStatusSection({
   defaultStage = "exercise",
 }: StudentStatusSectionProps) {
   const [stage, setStage] = useState<StudentStatusStage>(defaultStage);
+  const [selectedPart, setSelectedPart] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<StudentStatus | null>(null);
 
   const studentStatuses =
     stage === "exercise" ? exerciseStatuses : explanationStatuses;
 
+  const parts = useMemo(() => getUniqueParts(studentStatuses), [studentStatuses]);
+
+  const filteredStatuses = useMemo(
+    () =>
+      selectedPart
+        ? studentStatuses.filter((status) => status.part === selectedPart)
+        : [],
+    [selectedPart, studentStatuses],
+  );
+
+  useEffect(() => {
+    setSelectedPart(parts[0] ?? null);
+    setSelectedStatus(null);
+  }, [parts]);
+
   const switchStage = (nextStage: StudentStatusStage) => {
     setStage(nextStage);
+    setSelectedStatus(null);
+  };
+
+  const switchPart = (part: string) => {
+    setSelectedPart(part);
     setSelectedStatus(null);
   };
 
@@ -51,9 +73,24 @@ export function StudentStatusSection({
           </div>
         </div>
 
-        {studentStatuses.length > 0 ? (
+        {parts.length > 0 ? (
+          <div className="part-toggle-group mb-3">
+            {parts.map((part) => (
+              <button
+                key={part}
+                type="button"
+                className={`part-toggle ${selectedPart === part ? "part-toggle-active" : ""}`}
+                onClick={() => switchPart(part)}
+              >
+                {part}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {filteredStatuses.length > 0 ? (
           <div className="grid grid-cols-2 gap-3">
-            {studentStatuses.map((status) => (
+            {filteredStatuses.map((status) => (
               <button
                 key={status.id}
                 type="button"
